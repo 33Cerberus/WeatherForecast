@@ -23,24 +23,33 @@ fun main(): Unit = runBlocking {
         async { city to api.getForecast(city, 2, apiKey) }
     }.awaitAll()
 
-    val line = String.format(
-        "%-12s %-8s %-8s %-10s %-10s %-6s",
-        "City", "Min C", "Max C", "Humidity%", "Wind kph", "Dir",
+    val headerLine = String.format(
+        "%-12s %-12s %-8s %-8s %-10s %-10s %-6s",
+        "City", "Date", "Min C", "Max C", "Humidity%", "Wind kph", "Dir",
     )
+    println(headerLine)
 
-    println(line)
-
-    for ((city, response) in results) {
-        val tomorrow = response.forecast.forecastday[1]
-        val (date, day, hours) = tomorrow
-        val (mintemp_c, maxtemp_c, avghumidity, maxwind_kph) = day
-        val noonHour = hours.firstOrNull { it.time.endsWith("12:00") }
-        val wind_dir = noonHour?.wind_dir
-
-        val line = String.format(
-            "%-12s %-8.1f %-8.1f %-10.1f %-10.1f %-6s",
-            city, mintemp_c, maxtemp_c, avghumidity, maxwind_kph, wind_dir
-        )
-        println(line)
+    for (result in results) {
+        printResult(result)
     }
+}
+
+fun printResult(result: Pair<String, ForecastResponse>) {
+    val location = result.first
+
+    val forecastResponse = result.second
+    val forecast = forecastResponse.forecast
+
+    val tomorrow = forecast.forecastday[1]
+    val (date, day, hours) = tomorrow
+
+    val (mintemp_c, maxtemp_c, avghumidity, maxwind_kph) = day
+    val noonHour = hours.firstOrNull { it.time.endsWith("12:00") }
+    val wind_dir = noonHour?.wind_dir
+
+    val line = String.format(
+        "%-12s %-12s %-8.1f %-8.1f %-10.1f %-10.1f %-6s",
+        location, date, mintemp_c, maxtemp_c, avghumidity, maxwind_kph, wind_dir
+    )
+    println(line)
 }
