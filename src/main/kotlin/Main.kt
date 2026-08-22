@@ -17,6 +17,11 @@ fun main(): Unit = runBlocking {
     val dotenv = dotenv()
     val apiKey = dotenv["WEATHER_API_KEY"]
 
+    if (apiKey == null) {
+        System.err.println(".env file should contain WEATHER_API_KEY=your_api_key property")
+        return@runBlocking
+    }
+
     val cities = listOf("Chisinau", "Madrid", "Kyiv", "Amsterdam")
 
     val results = cities.map { city ->
