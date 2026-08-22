@@ -20,30 +20,50 @@ fun main(): Unit = runBlocking {
     val cities = listOf("Chisinau", "Madrid", "Kyiv", "Amsterdam")
 
     val results = cities.map { city ->
-        async { city to api.getForecast(city, 2, apiKey) }
+        async {
+            try {
+                city to api.getForecast(city, 2, apiKey)
+            } catch (e: Exception) {
+                city to null as ForecastResponse?
+            }
+        }
     }.awaitAll()
 
-    val headerLine = String.format(
-        "%-12s %-12s %-8s %-8s %-10s %-10s %-6s",
-        "City", "Date", "Min C", "Max C", "Humidity%", "Wind kph", "Dir",
-    )
-    println(headerLine)
+    printHeader()
 
     for (result in results) {
         printResult(result)
     }
 }
 
-fun printResult(result: Pair<String, ForecastResponse>) {
+fun printHeader()
+{
+    val headerLine = String.format(
+        "%-12s %-12s %-8s %-8s %-10s %-10s %-6s",
+        "City", "Date", "Min C", "Max C", "Humidity%", "Wind kph", "Dir",
+    )
+    println(headerLine)
+}
+
+fun printResult(result: Pair<String, ForecastResponse?>) {
     val location = result.first
-
     val forecastResponse = result.second
+
+    if (forecastResponse == null) {
+        val line = String.format(
+            "%-12s %-12s %-8s %-8s %-10s %-10s %-6s",
+            location, "No data", "No data", "No data", "No data", "No data", "No data"
+        )
+        println(line)
+        return
+    }
+
     val forecast = forecastResponse.forecast
-
     val tomorrow = forecast.forecastday[1]
-    val (date, day, hours) = tomorrow
 
+    val (date, day, hours) = tomorrow
     val (mintemp_c, maxtemp_c, avghumidity, maxwind_kph) = day
+
     val noonHour = hours.firstOrNull { it.time.endsWith("12:00") }
     val wind_dir = noonHour?.wind_dir
 
