@@ -69,12 +69,16 @@ fun printResult(result: Pair<String, ForecastResponse?>) {
     val (date, day, hours) = tomorrow
     val (mintemp_c, maxtemp_c, avghumidity, maxwind_kph) = day
 
-    val noonHour = hours.firstOrNull { it.time.endsWith("12:00") }
-    val wind_dir = noonHour?.wind_dir
+    val groupedHours = hours.groupingBy { it.wind_dir }
+    val dirCounts = groupedHours.eachCount()
+    val topEntry = dirCounts.maxByOrNull { it.value }
+    val mostCommonDir = topEntry?.key
+
+    val finalDir = mostCommonDir ?: "No data"
 
     val line = String.format(
         "%-12s %-12s %-8.1f %-8.1f %-10.1f %-10.1f %-6s",
-        location, date, mintemp_c, maxtemp_c, avghumidity, maxwind_kph, wind_dir
+        location, date, mintemp_c, maxtemp_c, avghumidity, maxwind_kph, finalDir
     )
     println(line)
 }
