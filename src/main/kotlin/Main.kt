@@ -1,4 +1,5 @@
 package org.example
+import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
@@ -24,6 +25,8 @@ fun main(): Unit = runBlocking {
 
     val cities = listOf("Chisinau", "Madrid", "Kyiv", "Amsterdam")
 
+    val tomorrowDate = LocalDate.now().plusDays(1).toString()
+
     val results = cities.map { city ->
         async {
             try {
@@ -37,7 +40,7 @@ fun main(): Unit = runBlocking {
     printHeader()
 
     for (result in results) {
-        printResult(result)
+        printResult(result, tomorrowDate)
     }
 }
 
@@ -50,7 +53,7 @@ fun printHeader()
     println(headerLine)
 }
 
-fun printResult(result: Pair<String, ForecastResponse?>) {
+fun printResult(result: Pair<String, ForecastResponse?>, tomorrowDate: String) {
     val location = result.first
     val forecastResponse = result.second
 
@@ -64,7 +67,16 @@ fun printResult(result: Pair<String, ForecastResponse?>) {
     }
 
     val forecast = forecastResponse.forecast
-    val tomorrow = forecast.forecastday[1]
+    val tomorrow = forecast.forecastday.firstOrNull { it.date == tomorrowDate }
+
+    if (tomorrow == null) {
+        val line = String.format(
+            "%-12s %-12s %-8s %-8s %-10s %-10s %-6s",
+            location, tomorrowDate, "No data", "No data", "No data", "No data", "No data"
+        )
+        println(line)
+        return
+    }
 
     val (date, day, hours) = tomorrow
     val (mintemp_c, maxtemp_c, avghumidity, maxwind_kph) = day
