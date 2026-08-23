@@ -1,5 +1,7 @@
 package org.example
 
+import java.util.Locale
+
 const val TABLE_FORMAT = "%-12s %-12s %-8s %-8s %-10s %-10s %-6s"
 
 fun printHeader()
@@ -8,5 +10,5 @@ fun printHeader()
 }
 
 fun printRow(row: CityWeatherRow) {
-    println(String.format(TABLE_FORMAT, row.city, row.date, row.minTemp, row.maxTemp, row.humidity, row.windSpeed, row.windDir))
+    println(String.format(Locale.US, TABLE_FORMAT, row.city, row.date, row.minTemp, row.maxTemp, row.humidity, row.windSpeed, row.windDir))
 }

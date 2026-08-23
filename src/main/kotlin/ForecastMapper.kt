@@ -1,4 +1,5 @@
 package org.example
+import java.util.Locale
 
 data class CityWeatherRow(
     val city: String,
@@ -31,10 +32,10 @@ fun buildRow(result: Pair<String, ForecastResponse?>, tomorrowDate: String): Cit
     val finalDir = findMostCommonWindDirection(hours) ?: "No data"
 
     return CityWeatherRow(location, date,
-        String.format("%.1f", mintemp_c),
-        String.format("%.1f", maxtemp_c),
-        String.format("%.1f", avghumidity),
-        String.format("%.1f", maxwind_kph),
+        String.format(Locale.US, "%.1f", mintemp_c),
+        String.format(Locale.US, "%.1f", maxtemp_c),
+        String.format(Locale.US, "%.1f", avghumidity),
+        String.format(Locale.US, "%.1f", maxwind_kph),
         finalDir)
 }
 
