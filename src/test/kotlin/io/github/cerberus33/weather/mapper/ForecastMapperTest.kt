@@ -1,5 +1,11 @@
-package org.example
+package io.github.cerberus33.weather.mapper
 
+import io.github.cerberus33.weather.model.Day
+import io.github.cerberus33.weather.model.Forecast
+import io.github.cerberus33.weather.model.ForecastDay
+import io.github.cerberus33.weather.model.ForecastResponse
+import io.github.cerberus33.weather.model.Hour
+import io.github.cerberus33.weather.model.Location
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

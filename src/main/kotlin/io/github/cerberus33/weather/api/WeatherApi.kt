@@ -1,4 +1,6 @@
-package org.example
+package io.github.cerberus33.weather.api
+
+import io.github.cerberus33.weather.model.ForecastResponse
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll

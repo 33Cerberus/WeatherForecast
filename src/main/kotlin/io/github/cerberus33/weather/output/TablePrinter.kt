@@ -1,5 +1,6 @@
-package org.example
+package io.github.cerberus33.weather.output
 
+import io.github.cerberus33.weather.mapper.CityWeatherRow
 import java.util.Locale
 
 const val TABLE_FORMAT = "%-12s %-12s %-8s %-8s %-10s %-10s %-6s"

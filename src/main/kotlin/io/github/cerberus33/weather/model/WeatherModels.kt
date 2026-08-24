@@ -1,4 +1,5 @@
-package org.example
+package io.github.cerberus33.weather.model
+
 import com.google.gson.annotations.SerializedName
 
 data class ForecastResponse(

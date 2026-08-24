@@ -1,8 +1,14 @@
-package org.example
+package io.github.cerberus33.weather
+
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 import io.github.cdimascio.dotenv.dotenv
+import io.github.cerberus33.weather.api.createWeatherApi
+import io.github.cerberus33.weather.api.fetchForecasts
+import io.github.cerberus33.weather.mapper.buildRow
+import io.github.cerberus33.weather.output.printHeader
+import io.github.cerberus33.weather.output.printRow
 
 fun main(): Unit = runBlocking {
     val (api, client) = createWeatherApi()
@@ -26,6 +32,6 @@ fun main(): Unit = runBlocking {
         printRow(buildRow(result, tomorrowDate))
     }
 
-    client.dispatcher().executorService().shutdown()
-    client.connectionPool().evictAll()
+    client.dispatcher.executorService.shutdown()
+    client.connectionPool.evictAll()
 }

@@ -1,4 +1,8 @@
-package org.example
+package io.github.cerberus33.weather.mapper
+
+import io.github.cerberus33.weather.model.ForecastDay
+import io.github.cerberus33.weather.model.ForecastResponse
+import io.github.cerberus33.weather.model.Hour
 import java.util.Locale
 
 private const val NO_DATA = "No data"
