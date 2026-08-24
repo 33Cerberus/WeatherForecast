@@ -8,9 +8,15 @@ import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
+import java.util.concurrent.TimeUnit
+
+private const val FORECAST_DAYS = 3
 
 fun createWeatherApi(): Pair<WeatherApi, OkHttpClient>{
-    val client = OkHttpClient()
+    val client = OkHttpClient.Builder()
+        .connectTimeout(10, TimeUnit.SECONDS)
+        .readTimeout(10, TimeUnit.SECONDS)
+        .build()
 
     val retrofit = Retrofit.Builder()
         .baseUrl("https://api.weatherapi.com/")
@@ -25,14 +31,14 @@ suspend fun fetchForecasts(api: WeatherApi, cities: List<String>, apiKey: String
     cities.map { city ->
         async {
             try {
-                city to api.getForecast(city, 2, apiKey)
+                city to api.getForecast(city, FORECAST_DAYS, apiKey)
             }
             catch (e: CancellationException) {
                 throw e
             }
             catch (e: Exception) {
                 System.err.println("Failed to fetch forecast for $city: ${e.message}")
-                city to null as ForecastResponse?
+                city to null
             }
         }
     }.awaitAll()

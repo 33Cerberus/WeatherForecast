@@ -1,6 +1,8 @@
 package org.example
 import java.util.Locale
 
+private const val NO_DATA = "No data"
+
 data class CityWeatherRow(
     val city: String,
     val date: String,
@@ -12,18 +14,20 @@ data class CityWeatherRow(
 )
 
 fun buildRow(result: Pair<String, ForecastResponse?>, tomorrowDate: String): CityWeatherRow{
-    val location = result.first
+    val givenLocation = result.first
     val forecastResponse = result.second
 
     if (forecastResponse == null) {
-        return CityWeatherRow(location, "No data", "No data", "No data", "No data", "No data", "No data")
+        return CityWeatherRow(givenLocation, tomorrowDate, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA)
     }
 
+    val receivedLocation = forecastResponse.location.name
+
     val forecast = forecastResponse.forecast
-    val tomorrow = findForecastForDate(forecast.forecastdays, tomorrowDate)
+    val tomorrow = findForecastForDate(forecast.forecastDays, tomorrowDate)
 
     if (tomorrow == null) {
-        return CityWeatherRow(location, tomorrowDate, "No data","No data", "No data", "No data", "No data")
+        return CityWeatherRow(receivedLocation, tomorrowDate, NO_DATA,NO_DATA, NO_DATA, NO_DATA, NO_DATA)
     }
 
     val date = tomorrow.date
@@ -35,12 +39,12 @@ fun buildRow(result: Pair<String, ForecastResponse?>, tomorrowDate: String): Cit
     val avgHumidity = day.avgHumidity
     val maxWindKph = day.maxWindKph
 
-    val finalDir = findMostCommonWindDirection(hours) ?: "No data"
+    val finalDir = findMostCommonWindDirection(hours) ?: NO_DATA
 
-    return CityWeatherRow(location, date,
+    return CityWeatherRow(receivedLocation, date,
         String.format(Locale.US, "%.1f", minTempC),
         String.format(Locale.US, "%.1f", maxTempC),
-        String.format(Locale.US, "%.1f", avgHumidity),
+        String.format(Locale.US, "%.0f", avgHumidity),
         String.format(Locale.US, "%.1f", maxWindKph),
         finalDir)
 }

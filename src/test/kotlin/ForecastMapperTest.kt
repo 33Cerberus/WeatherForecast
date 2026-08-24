@@ -94,7 +94,7 @@ class ForecastMapperTest {
         assertEquals(
             CityWeatherRow(
                 city = "Kyiv",
-                date = "No data",
+                date = "2026-08-24",
                 minTemp = "No data",
                 maxTemp = "No data",
                 humidity = "No data",
@@ -163,7 +163,7 @@ class ForecastMapperTest {
                 date = "2026-08-24",
                 minTemp = "14.7",
                 maxTemp = "23.9",
-                humidity = "39.0",
+                humidity = "39",
                 windSpeed = "22.0",
                 windDir = "NW"
             ),

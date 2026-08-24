@@ -11,7 +11,7 @@ data class Location(
 )
 
 data class Forecast(
-    @SerializedName("forecastday") val forecastdays: List<ForecastDay>
+    @SerializedName("forecastday") val forecastDays: List<ForecastDay>
 )
 
 data class ForecastDay(

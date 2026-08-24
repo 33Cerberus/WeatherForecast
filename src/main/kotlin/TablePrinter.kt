@@ -4,8 +4,7 @@ import java.util.Locale
 
 const val TABLE_FORMAT = "%-12s %-12s %-8s %-8s %-10s %-10s %-6s"
 
-fun printHeader()
-{
+fun printHeader() {
     printRow(CityWeatherRow("City", "Date", "Min C", "Max C", "Humidity%", "Wind kph", "Dir"))
 }
 
