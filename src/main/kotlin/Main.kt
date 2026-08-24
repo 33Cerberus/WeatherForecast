@@ -1,14 +1,18 @@
 package org.example
 import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
+import kotlin.system.exitProcess
 import io.github.cdimascio.dotenv.dotenv
 
 fun main(): Unit = runBlocking {
     val api = createWeatherApi()
-    val apiKey = dotenv()["WEATHER_API_KEY"]
+
+    val apiKey = dotenv { ignoreIfMissing = true }["WEATHER_API_KEY"] ?: System.getenv("WEATHER_API_KEY")
 
     if (apiKey == null) {
-        System.err.println(".env file should contain WEATHER_API_KEY=your_api_key property")
+        System.err.println(
+            "WEATHER_API_KEY is not set. Add it to a .env file in the project root or export it as an environment variable."
+        )
         return@runBlocking
     }
 
@@ -21,4 +25,6 @@ fun main(): Unit = runBlocking {
     for (result in results) {
         printRow(buildRow(result, tomorrowDate))
     }
+
+    exitProcess(0)
 }
