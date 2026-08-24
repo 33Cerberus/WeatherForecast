@@ -3,18 +3,22 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import okhttp3.OkHttpClient
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 
-fun createWeatherApi(): WeatherApi {
+fun createWeatherApi(): Pair<WeatherApi, OkHttpClient>{
+    val client = OkHttpClient()
+
     val retrofit = Retrofit.Builder()
         .baseUrl("https://api.weatherapi.com/")
+        .client(client)
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    return retrofit.create(WeatherApi::class.java)
+    return retrofit.create(WeatherApi::class.java) to client
 }
 
 suspend fun fetchForecasts(api: WeatherApi, cities: List<String>, apiKey: String): List<Pair<String, ForecastResponse?>> = coroutineScope {

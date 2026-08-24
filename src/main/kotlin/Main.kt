@@ -5,7 +5,7 @@ import kotlin.system.exitProcess
 import io.github.cdimascio.dotenv.dotenv
 
 fun main(): Unit = runBlocking {
-    val api = createWeatherApi()
+    val (api, client) = createWeatherApi()
 
     val apiKey = dotenv { ignoreIfMissing = true }["WEATHER_API_KEY"] ?: System.getenv("WEATHER_API_KEY")
 
@@ -13,7 +13,7 @@ fun main(): Unit = runBlocking {
         System.err.println(
             "WEATHER_API_KEY is not set. Add it to a .env file in the project root or export it as an environment variable."
         )
-        return@runBlocking
+        exitProcess(1)
     }
 
     val cities = listOf("Chisinau", "Madrid", "Kyiv", "Amsterdam")
@@ -26,5 +26,6 @@ fun main(): Unit = runBlocking {
         printRow(buildRow(result, tomorrowDate))
     }
 
-    exitProcess(0)
+    client.dispatcher().executorService().shutdown()
+    client.connectionPool().evictAll()
 }
