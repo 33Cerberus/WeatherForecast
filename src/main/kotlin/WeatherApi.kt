@@ -1,4 +1,5 @@
 package org.example
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -21,7 +22,12 @@ suspend fun fetchForecasts(api: WeatherApi, cities: List<String>, apiKey: String
         async {
             try {
                 city to api.getForecast(city, 2, apiKey)
-            } catch (e: Exception) {
+            }
+            catch (e: CancellationException) {
+                throw e
+            }
+            catch (e: Exception) {
+                System.err.println("Failed to fetch forecast for $city: ${e.message}")
                 city to null as ForecastResponse?
             }
         }
