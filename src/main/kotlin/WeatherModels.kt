@@ -1,4 +1,5 @@
 package org.example
+import com.google.gson.annotations.SerializedName
 
 data class ForecastResponse(
     val location: Location,
@@ -10,23 +11,23 @@ data class Location(
 )
 
 data class Forecast(
-    val forecastday: List<ForecastDay>
+    @SerializedName("forecastday") val forecastdays: List<ForecastDay>
 )
 
 data class ForecastDay(
     val date: String,
     val day: Day,
-    val hour: List<Hour>,
+    @SerializedName("hour") val hours: List<Hour>
 )
 
 data class Day(
-    val mintemp_c: Double,
-    val maxtemp_c: Double,
-    val avghumidity: Double,
-    val maxwind_kph: Double,
+    @SerializedName("mintemp_c") val minTempC: Double,
+    @SerializedName("maxtemp_c") val maxTempC: Double,
+    @SerializedName("avghumidity") val avgHumidity: Double,
+    @SerializedName("maxwind_kph") val maxWindKph: Double
 )
 
 data class Hour(
     val time: String,
-    val wind_dir: String
+    @SerializedName("wind_dir") val windDir: String
 )

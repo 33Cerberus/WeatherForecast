@@ -20,27 +20,33 @@ fun buildRow(result: Pair<String, ForecastResponse?>, tomorrowDate: String): Cit
     }
 
     val forecast = forecastResponse.forecast
-    val tomorrow = findForecastForDate(forecast.forecastday, tomorrowDate)
+    val tomorrow = findForecastForDate(forecast.forecastdays, tomorrowDate)
 
     if (tomorrow == null) {
         return CityWeatherRow(location, tomorrowDate, "No data","No data", "No data", "No data", "No data")
     }
 
-    val (date, day, hours) = tomorrow
-    val (mintemp_c, maxtemp_c, avghumidity, maxwind_kph) = day
+    val date = tomorrow.date
+    val day = tomorrow.day
+    val hours = tomorrow.hours
+
+    val minTempC = day.minTempC
+    val maxTempC = day.maxTempC
+    val avgHumidity = day.avgHumidity
+    val maxWindKph = day.maxWindKph
 
     val finalDir = findMostCommonWindDirection(hours) ?: "No data"
 
     return CityWeatherRow(location, date,
-        String.format(Locale.US, "%.1f", mintemp_c),
-        String.format(Locale.US, "%.1f", maxtemp_c),
-        String.format(Locale.US, "%.1f", avghumidity),
-        String.format(Locale.US, "%.1f", maxwind_kph),
+        String.format(Locale.US, "%.1f", minTempC),
+        String.format(Locale.US, "%.1f", maxTempC),
+        String.format(Locale.US, "%.1f", avgHumidity),
+        String.format(Locale.US, "%.1f", maxWindKph),
         finalDir)
 }
 
 fun findMostCommonWindDirection(hours: List<Hour>): String? {
-    val groupedHours = hours.groupingBy { it.wind_dir }
+    val groupedHours = hours.groupingBy { it.windDir }
     val dirCounts = groupedHours.eachCount()
     val topEntry = dirCounts.maxByOrNull { it.value }
     val mostCommonDir = topEntry?.key

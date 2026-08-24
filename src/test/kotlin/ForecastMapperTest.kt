@@ -44,21 +44,21 @@ class ForecastMapperTest {
         val requestedDate = "2026-08-25"
         val expectedDay = ForecastDay(
             date = requestedDate,
-            day = Day(mintemp_c = 5.0, maxtemp_c = 10.0, avghumidity = 25.0, maxwind_kph = 7.5),
-            hour = emptyList()
+            day = Day(minTempC = 5.0, maxTempC = 10.0, avgHumidity = 25.0, maxWindKph = 7.5),
+            hours = emptyList()
         )
 
         val days = listOf(
             ForecastDay(
                 date = "2026-08-24",
-                day = Day(mintemp_c = 10.0, maxtemp_c = 20.0, avghumidity = 50.0, maxwind_kph = 15.0),
-                hour = emptyList()
+                day = Day(minTempC = 10.0, maxTempC = 20.0, avgHumidity = 50.0, maxWindKph = 15.0),
+                hours = emptyList()
             ),
             expectedDay,
             ForecastDay(
                 date = "2026-08-26",
-                day = Day(mintemp_c = 3.0, maxtemp_c = 7.0, avghumidity = 13.0, maxwind_kph = 5.0),
-                hour = emptyList()
+                day = Day(minTempC = 3.0, maxTempC = 7.0, avgHumidity = 13.0, maxWindKph = 5.0),
+                hours = emptyList()
             )
         )
 
@@ -72,13 +72,13 @@ class ForecastMapperTest {
         val days = listOf(
             ForecastDay(
                 date = "2026-08-24",
-                day = Day(mintemp_c = 10.0, maxtemp_c = 20.0, avghumidity = 50.0, maxwind_kph = 15.0),
-                hour = emptyList()
+                day = Day(minTempC = 10.0, maxTempC = 20.0, avgHumidity = 50.0, maxWindKph = 15.0),
+                hours = emptyList()
             ),
             ForecastDay(
                 date = "2026-08-25",
-                day = Day(mintemp_c = 15.0, maxtemp_c = 25.0, avghumidity = 10.0, maxwind_kph = 12.0),
-                hour = emptyList()
+                day = Day(minTempC = 15.0, maxTempC = 25.0, avgHumidity = 10.0, maxWindKph = 12.0),
+                hours = emptyList()
             )
         )
 
@@ -113,8 +113,8 @@ class ForecastMapperTest {
                 listOf(
                     ForecastDay(
                         date = "2026-08-25",
-                        day = Day(mintemp_c = 10.0, maxtemp_c = 20.0, avghumidity = 50.0, maxwind_kph = 15.0),
-                        hour = emptyList()
+                        day = Day(minTempC = 10.0, maxTempC = 20.0, avgHumidity = 50.0, maxWindKph = 15.0),
+                        hours = emptyList()
                     )
                 )
             )
@@ -144,8 +144,8 @@ class ForecastMapperTest {
                 listOf(
                     ForecastDay(
                         date = "2026-08-24",
-                        day = Day(mintemp_c = 14.7, maxtemp_c = 23.9, avghumidity = 39.0, maxwind_kph = 22.0),
-                        hour = listOf(
+                        day = Day(minTempC = 14.7, maxTempC = 23.9, avgHumidity = 39.0, maxWindKph = 22.0),
+                        hours = listOf(
                             Hour("2026-08-24 00:00", "NW"),
                             Hour("2026-08-24 01:00", "NW"),
                             Hour("2026-08-24 02:00", "S")
