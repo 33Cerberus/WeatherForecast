@@ -5,14 +5,17 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
+import kotlinx.serialization.json.Json
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
+import retrofit2.converter.kotlinx.serialization.asConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
 private const val FORECAST_DAYS = 3
+private val json = Json { ignoreUnknownKeys = true }
 
 class WeatherClient(val api: WeatherApi, private val client: OkHttpClient) : AutoCloseable {
     override fun close() {
@@ -30,7 +33,7 @@ fun createWeatherClient(): WeatherClient {
     val retrofit = Retrofit.Builder()
         .baseUrl("https://api.weatherapi.com/")
         .client(client)
-        .addConverterFactory(GsonConverterFactory.create())
+        .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
 
     return WeatherClient(retrofit.create(WeatherApi::class.java), client)

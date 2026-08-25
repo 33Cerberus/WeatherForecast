@@ -1,6 +1,6 @@
 package io.github.cerberus33.weather.mapper
 
-import com.google.gson.Gson
+import kotlinx.serialization.json.Json
 import io.github.cerberus33.weather.model.Day
 import io.github.cerberus33.weather.model.Forecast
 import io.github.cerberus33.weather.model.ForecastDay
@@ -13,6 +13,8 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class ForecastMapperTest {
+    private val json = Json { ignoreUnknownKeys = true }
+
     private fun day(date: String, hours: List<Hour> = emptyList()) =
         ForecastDay(date, Day(14.7, 23.9, 39.0, 22.0), hours)
 
@@ -164,7 +166,7 @@ class ForecastMapperTest {
 
     @Test
     fun `deserializes the WeatherAPI response shape`() {
-        val json = """
+        val jsonString = """
         {
           "location": { "name": "Kyiv" },
           "forecast": {
@@ -180,10 +182,10 @@ class ForecastMapperTest {
         }
     """.trimIndent()
 
-        val response = Gson().fromJson(json, ForecastResponse::class.java)
+        val response = json.decodeFromString<ForecastResponse>(jsonString)
 
-        assertEquals("Kyiv", response.location?.name)
-        assertEquals(14.7, response.forecast?.forecastDays?.get(0)?.day?.minTempC)
-        assertEquals("NW", response.forecast?.forecastDays?.get(0)?.hours?.get(0)?.windDir)
+        assertEquals("Kyiv", response.location.name)
+        assertEquals(14.7, response.forecast.forecastDays[0].day.minTempC)
+        assertEquals("NW", response.forecast.forecastDays[0].hours[0].windDir)
     }
 }
