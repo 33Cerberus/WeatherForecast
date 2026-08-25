@@ -176,4 +176,31 @@ class ForecastMapperTest {
             row
         )
     }
+
+    @Test
+    fun `uses the location name returned by the API, not the query string`() {
+        val response = ForecastResponse(
+            location = Location("Kyiv"),
+            forecast = Forecast(
+                listOf(
+                    ForecastDay(
+                        date = "2026-08-24",
+                        day = Day(minTempC = 14.7, maxTempC = 23.9, avgHumidity = 39.0, maxWindKph = 22.0),
+                        hours = emptyList()
+                    )
+                )
+            )
+        )
+
+        val row = buildRow("kiev" to response, "2026-08-24")
+
+        assertEquals("Kyiv", row.city)
+    }
+
+    @Test
+    fun `keeps the query string when the request failed`() {
+        val row = buildRow("kiev" to null, "2026-08-24")
+
+        assertEquals("kiev", row.city)
+    }
 }

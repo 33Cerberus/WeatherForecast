@@ -14,7 +14,14 @@ import java.util.concurrent.TimeUnit
 
 private const val FORECAST_DAYS = 3
 
-fun createWeatherApi(): Pair<WeatherApi, OkHttpClient>{
+class WeatherClient(val api: WeatherApi, private val client: OkHttpClient) : AutoCloseable {
+    override fun close() {
+        client.dispatcher.executorService.shutdown()
+        client.connectionPool.evictAll()
+    }
+}
+
+fun createWeatherClient(): WeatherClient {
     val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(10, TimeUnit.SECONDS)
@@ -26,7 +33,7 @@ fun createWeatherApi(): Pair<WeatherApi, OkHttpClient>{
         .addConverterFactory(GsonConverterFactory.create())
         .build()
 
-    return retrofit.create(WeatherApi::class.java) to client
+    return WeatherClient(retrofit.create(WeatherApi::class.java), client)
 }
 
 suspend fun fetchForecasts(api: WeatherApi, cities: List<String>, apiKey: String): List<Pair<String, ForecastResponse?>> = coroutineScope {
@@ -34,11 +41,9 @@ suspend fun fetchForecasts(api: WeatherApi, cities: List<String>, apiKey: String
         async {
             try {
                 city to api.getForecast(city, FORECAST_DAYS, apiKey)
-            }
-            catch (e: CancellationException) {
+            } catch (e: CancellationException) {
                 throw e
-            }
-            catch (e: Exception) {
+            } catch (e: Exception) {
                 System.err.println("Failed to fetch forecast for $city: ${e.message}")
                 city to null
             }

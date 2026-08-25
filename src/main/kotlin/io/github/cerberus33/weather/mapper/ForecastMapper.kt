@@ -17,7 +17,7 @@ data class CityWeatherRow(
     val windDir: String
 )
 
-fun buildRow(result: Pair<String, ForecastResponse?>, tomorrowDate: String): CityWeatherRow{
+fun buildRow(result: Pair<String, ForecastResponse?>, tomorrowDate: String): CityWeatherRow {
     val givenLocation = result.first
     val forecastResponse = result.second
 
@@ -31,27 +31,23 @@ fun buildRow(result: Pair<String, ForecastResponse?>, tomorrowDate: String): Cit
     val tomorrow = findForecastForDate(forecast.forecastDays, tomorrowDate)
 
     if (tomorrow == null) {
-        return CityWeatherRow(receivedLocation, tomorrowDate, NO_DATA,NO_DATA, NO_DATA, NO_DATA, NO_DATA)
+        return CityWeatherRow(receivedLocation, tomorrowDate, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA)
     }
 
-    val date = tomorrow.date
-    val day = tomorrow.day
-    val hours = tomorrow.hours
+    val finalDir = findMostCommonWindDirection(tomorrow.hours) ?: NO_DATA
 
-    val minTempC = day.minTempC
-    val maxTempC = day.maxTempC
-    val avgHumidity = day.avgHumidity
-    val maxWindKph = day.maxWindKph
-
-    val finalDir = findMostCommonWindDirection(hours) ?: NO_DATA
-
-    return CityWeatherRow(receivedLocation, date,
-        String.format(Locale.US, "%.1f", minTempC),
-        String.format(Locale.US, "%.1f", maxTempC),
-        String.format(Locale.US, "%.0f", avgHumidity),
-        String.format(Locale.US, "%.1f", maxWindKph),
-        finalDir)
+    return CityWeatherRow(
+        receivedLocation,
+        tomorrow.date,
+        format(tomorrow.day.minTempC),
+        format(tomorrow.day.maxTempC),
+        format(tomorrow.day.avgHumidity, 0),
+        format(tomorrow.day.maxWindKph),
+        finalDir
+    )
 }
+
+private fun format(value: Double, decimals: Int = 1) = String.format(Locale.US, "%.${decimals}f", value)
 
 fun findMostCommonWindDirection(hours: List<Hour>): String? {
     val groupedHours = hours.groupingBy { it.windDir }

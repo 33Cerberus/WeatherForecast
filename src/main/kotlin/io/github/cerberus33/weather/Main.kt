@@ -4,15 +4,13 @@ import java.time.LocalDate
 import kotlinx.coroutines.runBlocking
 import kotlin.system.exitProcess
 import io.github.cdimascio.dotenv.dotenv
-import io.github.cerberus33.weather.api.createWeatherApi
+import io.github.cerberus33.weather.api.createWeatherClient
 import io.github.cerberus33.weather.api.fetchForecasts
 import io.github.cerberus33.weather.mapper.buildRow
 import io.github.cerberus33.weather.output.printHeader
 import io.github.cerberus33.weather.output.printRow
 
 fun main(): Unit = runBlocking {
-    val (api, client) = createWeatherApi()
-
     val apiKey = dotenv { ignoreIfMissing = true }["WEATHER_API_KEY"] ?: System.getenv("WEATHER_API_KEY")
 
     if (apiKey == null) {
@@ -22,16 +20,15 @@ fun main(): Unit = runBlocking {
         exitProcess(1)
     }
 
-    val cities = listOf("Chisinau", "Madrid", "Kyiv", "Amsterdam")
-    val tomorrowDate = LocalDate.now().plusDays(1).toString()
+    createWeatherClient().use { weatherClient ->
+        val cities = listOf("Chisinau", "Madrid", "Kyiv", "Amsterdam")
+        val tomorrowDate = LocalDate.now().plusDays(1).toString()
 
-    val results = fetchForecasts(api, cities, apiKey)
+        val results = fetchForecasts(weatherClient.api, cities, apiKey)
 
-    printHeader()
-    for (result in results) {
-        printRow(buildRow(result, tomorrowDate))
+        printHeader()
+        for (result in results) {
+            printRow(buildRow(result, tomorrowDate))
+        }
     }
-
-    client.dispatcher.executorService.shutdown()
-    client.connectionPool.evictAll()
 }
