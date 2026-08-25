@@ -30,4 +30,4 @@ private fun printFormattedRow(
 }
 
 private fun truncate(value: String, maxLength: Int): String =
-    if (value.length <= maxLength) value else value.take(maxLength - 1) + "…"
+    if (value.length <= maxLength - 3) value else value.take(maxLength - 3) + "..."

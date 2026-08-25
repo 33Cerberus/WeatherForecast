@@ -4,6 +4,7 @@ import io.github.cerberus33.weather.mapper.CityWeatherRow
 import java.io.ByteArrayOutputStream
 import java.io.PrintStream
 import kotlin.test.Test
+import kotlin.test.assertTrue
 import kotlin.test.assertEquals
 
 class TablePrinterTest {
@@ -44,6 +45,6 @@ class TablePrinterTest {
 
         val output = captureOutput { printRow(row) }
 
-        assert(output.startsWith("Verylongcit…")) { "Expected truncated name, got: $output" }
+        assertTrue(output.startsWith("Verylongc..."), "Expected truncated name, got: $output")
     }
 }
