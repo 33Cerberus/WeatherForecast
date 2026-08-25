@@ -1,5 +1,6 @@
 package io.github.cerberus33.weather.mapper
 
+import com.google.gson.Gson
 import io.github.cerberus33.weather.model.Day
 import io.github.cerberus33.weather.model.Forecast
 import io.github.cerberus33.weather.model.ForecastDay
@@ -11,6 +12,11 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 class ForecastMapperTest {
+    private fun day(date: String, hours: List<Hour> = emptyList()) =
+        ForecastDay(date, Day(14.7, 23.9, 39.0, 22.0), hours)
+
+    private fun response(vararg days: ForecastDay, name: String = "Kyiv") =
+        ForecastResponse(Location(name), Forecast(days.toList()))
 
     @Test
     fun `returns the direction that occurs most often`() {
@@ -48,25 +54,9 @@ class ForecastMapperTest {
     @Test
     fun `returns the forecast matching the requested date`() {
         val requestedDate = "2026-08-25"
-        val expectedDay = ForecastDay(
-            date = requestedDate,
-            day = Day(minTempC = 5.0, maxTempC = 10.0, avgHumidity = 25.0, maxWindKph = 7.5),
-            hours = emptyList()
-        )
+        val expectedDay = day(requestedDate)
 
-        val days = listOf(
-            ForecastDay(
-                date = "2026-08-24",
-                day = Day(minTempC = 10.0, maxTempC = 20.0, avgHumidity = 50.0, maxWindKph = 15.0),
-                hours = emptyList()
-            ),
-            expectedDay,
-            ForecastDay(
-                date = "2026-08-26",
-                day = Day(minTempC = 3.0, maxTempC = 7.0, avgHumidity = 13.0, maxWindKph = 5.0),
-                hours = emptyList()
-            )
-        )
+        val days = listOf(day("2026-08-24"), expectedDay, day("2026-08-26"))
 
         val result = findForecastForDate(days, requestedDate)
 
@@ -75,18 +65,7 @@ class ForecastMapperTest {
 
     @Test
     fun `returns null when the requested date is absent`() {
-        val days = listOf(
-            ForecastDay(
-                date = "2026-08-24",
-                day = Day(minTempC = 10.0, maxTempC = 20.0, avgHumidity = 50.0, maxWindKph = 15.0),
-                hours = emptyList()
-            ),
-            ForecastDay(
-                date = "2026-08-25",
-                day = Day(minTempC = 15.0, maxTempC = 25.0, avgHumidity = 10.0, maxWindKph = 12.0),
-                hours = emptyList()
-            )
-        )
+        val days = listOf(day("2026-08-24"), day("2026-08-25"))
 
         val result = findForecastForDate(days, "2026-08-01")
 
@@ -113,18 +92,7 @@ class ForecastMapperTest {
 
     @Test
     fun `builds a placeholder row when the response lacks the requested date`() {
-        val response = ForecastResponse(
-            location = Location("Kyiv"),
-            forecast = Forecast(
-                listOf(
-                    ForecastDay(
-                        date = "2026-08-25",
-                        day = Day(minTempC = 10.0, maxTempC = 20.0, avgHumidity = 50.0, maxWindKph = 15.0),
-                        hours = emptyList()
-                    )
-                )
-            )
-        )
+        val response = response(day("2026-08-25"))
 
         val row = buildRow("Kyiv" to response, "2026-08-24")
 
@@ -179,18 +147,7 @@ class ForecastMapperTest {
 
     @Test
     fun `uses the location name returned by the API, not the query string`() {
-        val response = ForecastResponse(
-            location = Location("Kyiv"),
-            forecast = Forecast(
-                listOf(
-                    ForecastDay(
-                        date = "2026-08-24",
-                        day = Day(minTempC = 14.7, maxTempC = 23.9, avgHumidity = 39.0, maxWindKph = 22.0),
-                        hours = emptyList()
-                    )
-                )
-            )
-        )
+        val response = response(day("2026-08-24"), name = "Kyiv")
 
         val row = buildRow("kiev" to response, "2026-08-24")
 
@@ -202,5 +159,30 @@ class ForecastMapperTest {
         val row = buildRow("kiev" to null, "2026-08-24")
 
         assertEquals("kiev", row.city)
+    }
+
+    @Test
+    fun `deserializes the WeatherAPI response shape`() {
+        val json = """
+        {
+          "location": { "name": "Kyiv" },
+          "forecast": {
+            "forecastday": [{
+              "date": "2026-08-24",
+              "day": {
+                "mintemp_c": 14.7, "maxtemp_c": 23.9,
+                "avghumidity": 39.0, "maxwind_kph": 22.0
+              },
+              "hour": [{ "time": "2026-08-24 00:00", "wind_dir": "NW" }]
+            }]
+          }
+        }
+    """.trimIndent()
+
+        val response = Gson().fromJson(json, ForecastResponse::class.java)
+
+        assertEquals("Kyiv", response.location.name)
+        assertEquals(14.7, response.forecast.forecastDays[0].day.minTempC)
+        assertEquals("NW", response.forecast.forecastDays[0].hours[0].windDir)
     }
 }
