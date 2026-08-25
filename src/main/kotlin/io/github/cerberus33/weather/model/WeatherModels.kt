@@ -27,6 +27,6 @@ data class Day(
 )
 
 data class Hour(
-    val time: String,
+    val time: String?,
     @SerializedName("wind_dir") val windDir: String?
 )

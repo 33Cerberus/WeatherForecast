@@ -11,7 +11,7 @@ import io.github.cerberus33.weather.output.printRow
 import io.github.cerberus33.weather.time.resolveTargetDate
 
 fun main(): Unit = runBlocking {
-    val apiKey = dotenv { ignoreIfMissing = true }["WEATHER_API_KEY"] ?: System.getenv("WEATHER_API_KEY")
+    val apiKey = dotenv { ignoreIfMissing = true }["WEATHER_API_KEY"]
 
     if (apiKey.isNullOrBlank()) {
         System.err.println(
