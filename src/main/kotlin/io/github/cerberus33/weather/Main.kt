@@ -13,7 +13,7 @@ import io.github.cerberus33.weather.output.printRow
 fun main(): Unit = runBlocking {
     val apiKey = dotenv { ignoreIfMissing = true }["WEATHER_API_KEY"] ?: System.getenv("WEATHER_API_KEY")
 
-    if (apiKey == null) {
+    if (apiKey.isNullOrBlank()) {
         System.err.println(
             "WEATHER_API_KEY is not set. Add it to a .env file in the project root or export it as an environment variable."
         )
