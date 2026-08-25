@@ -3,6 +3,7 @@ package io.github.cerberus33.weather.mapper
 import io.github.cerberus33.weather.model.ForecastDay
 import io.github.cerberus33.weather.model.ForecastResponse
 import io.github.cerberus33.weather.model.Hour
+import java.time.LocalDate
 import java.util.Locale
 
 private const val NO_DATA = "No data"
@@ -17,46 +18,41 @@ data class CityWeatherRow(
     val windDir: String
 )
 
-fun buildRow(result: Pair<String, ForecastResponse?>, tomorrowDate: String): CityWeatherRow {
-    val givenLocation = result.first
-    val forecastResponse = result.second
+fun buildRow(result: Pair<String, ForecastResponse?>, targetDate: LocalDate): CityWeatherRow {
+    val (queriedCity, response) = result
+    val dateLabel = targetDate.toString()
 
-    if (forecastResponse == null) {
-        return CityWeatherRow(givenLocation, tomorrowDate, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA)
-    }
+    if (response == null) return emptyRow(queriedCity, dateLabel)
 
-    val receivedLocation = forecastResponse.location.name
-
-    val forecast = forecastResponse.forecast
-    val tomorrow = findForecastForDate(forecast.forecastDays, tomorrowDate)
-
-    if (tomorrow == null) {
-        return CityWeatherRow(receivedLocation, tomorrowDate, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA)
-    }
-
-    val finalDir = findMostCommonWindDirection(tomorrow.hours) ?: NO_DATA
+    val city = response.location?.name?.takeIf { it.isNotBlank() } ?: queriedCity
+    val tomorrow = findForecastForDate(response.forecast?.forecastDays, targetDate)
+        ?: return emptyRow(city, dateLabel)
 
     return CityWeatherRow(
-        receivedLocation,
-        tomorrow.date,
-        format(tomorrow.day.minTempC),
-        format(tomorrow.day.maxTempC),
-        format(tomorrow.day.avgHumidity, 0),
-        format(tomorrow.day.maxWindKph),
-        finalDir
+        city = city,
+        date = tomorrow.date ?: dateLabel,
+        minTemp = format(tomorrow.day?.minTempC),
+        maxTemp = format(tomorrow.day?.maxTempC),
+        humidity = format(tomorrow.day?.avgHumidity, decimals = 0),
+        windSpeed = format(tomorrow.day?.maxWindKph),
+        windDir = findMostCommonWindDirection(tomorrow.hours) ?: NO_DATA
     )
 }
 
-private fun format(value: Double, decimals: Int = 1) = String.format(Locale.US, "%.${decimals}f", value)
+private fun format(value: Double?, decimals: Int = 1): String =
+    value?.let { String.format(Locale.US, "%.${decimals}f", it) } ?: NO_DATA
 
-fun findMostCommonWindDirection(hours: List<Hour>): String? {
-    val groupedHours = hours.groupingBy { it.windDir }
-    val dirCounts = groupedHours.eachCount()
-    val topEntry = dirCounts.maxByOrNull { it.value }
-    val mostCommonDir = topEntry?.key
-    return mostCommonDir
-}
+private fun emptyRow(city: String, date: String) =
+    CityWeatherRow(city, date, NO_DATA, NO_DATA, NO_DATA, NO_DATA, NO_DATA)
 
-fun findForecastForDate(days: List<ForecastDay>, date: String): ForecastDay? {
-    return days.firstOrNull { it.date == date }
-}
+fun findMostCommonWindDirection(hours: List<Hour>?): String? =
+    hours.orEmpty()
+        .mapNotNull { it.windDir }
+        .groupingBy { it }
+        .eachCount()
+        .maxByOrNull { it.value }
+        ?.key
+
+
+fun findForecastForDate(days: List<ForecastDay>?, date: LocalDate): ForecastDay? =
+    days?.firstOrNull { it.date == date.toString() }

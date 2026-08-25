@@ -7,6 +7,7 @@ import io.github.cerberus33.weather.model.ForecastDay
 import io.github.cerberus33.weather.model.ForecastResponse
 import io.github.cerberus33.weather.model.Hour
 import io.github.cerberus33.weather.model.Location
+import java.time.LocalDate
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -53,8 +54,8 @@ class ForecastMapperTest {
 
     @Test
     fun `returns the forecast matching the requested date`() {
-        val requestedDate = "2026-08-25"
-        val expectedDay = day(requestedDate)
+        val requestedDate = LocalDate.parse("2026-08-25")
+        val expectedDay = day(requestedDate.toString())
 
         val days = listOf(day("2026-08-24"), expectedDay, day("2026-08-26"))
 
@@ -67,14 +68,14 @@ class ForecastMapperTest {
     fun `returns null when the requested date is absent`() {
         val days = listOf(day("2026-08-24"), day("2026-08-25"))
 
-        val result = findForecastForDate(days, "2026-08-01")
+        val result = findForecastForDate(days, LocalDate.parse("2026-08-01"))
 
         assertNull(result)
     }
 
     @Test
     fun `builds a placeholder row when the request failed`() {
-        val row = buildRow("Kyiv" to null, "2026-08-24")
+        val row = buildRow("Kyiv" to null, LocalDate.parse("2026-08-24"))
 
         assertEquals(
             CityWeatherRow(
@@ -94,7 +95,7 @@ class ForecastMapperTest {
     fun `builds a placeholder row when the response lacks the requested date`() {
         val response = response(day("2026-08-25"))
 
-        val row = buildRow("Kyiv" to response, "2026-08-24")
+        val row = buildRow("Kyiv" to response, LocalDate.parse("2026-08-24"))
 
         assertEquals(
             CityWeatherRow(
@@ -129,7 +130,7 @@ class ForecastMapperTest {
             )
         )
 
-        val row = buildRow("Kyiv" to response, "2026-08-24")
+        val row = buildRow("Kyiv" to response, LocalDate.parse("2026-08-24"))
 
         assertEquals(
             CityWeatherRow(
@@ -149,14 +150,14 @@ class ForecastMapperTest {
     fun `uses the location name returned by the API, not the query string`() {
         val response = response(day("2026-08-24"), name = "Kyiv")
 
-        val row = buildRow("kiev" to response, "2026-08-24")
+        val row = buildRow("kiev" to response, LocalDate.parse("2026-08-24"))
 
         assertEquals("Kyiv", row.city)
     }
 
     @Test
     fun `keeps the query string when the request failed`() {
-        val row = buildRow("kiev" to null, "2026-08-24")
+        val row = buildRow("kiev" to null, LocalDate.parse("2026-08-24"))
 
         assertEquals("kiev", row.city)
     }
@@ -181,8 +182,8 @@ class ForecastMapperTest {
 
         val response = Gson().fromJson(json, ForecastResponse::class.java)
 
-        assertEquals("Kyiv", response.location.name)
-        assertEquals(14.7, response.forecast.forecastDays[0].day.minTempC)
-        assertEquals("NW", response.forecast.forecastDays[0].hours[0].windDir)
+        assertEquals("Kyiv", response.location?.name)
+        assertEquals(14.7, response.forecast?.forecastDays?.get(0)?.day?.minTempC)
+        assertEquals("NW", response.forecast?.forecastDays?.get(0)?.hours?.get(0)?.windDir)
     }
 }
