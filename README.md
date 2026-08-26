@@ -55,7 +55,7 @@ If the key is missing or blank, the program prints a clear message to stderr and
 ./gradlew test
 ```
 
-15 tests across four areas:
+22 tests across four areas:
 
 - **Mapping** (`ForecastMapper`) — wind direction as mode, date matching, `No data` fallbacks, and that the table shows the API's normalized city name rather than the raw query string.
 - **Date resolution** (`TargetDate`) — `resolveTomorrow` against a `Clock.fixed`, so the result doesn't depend on when the test actually runs.
@@ -87,6 +87,8 @@ io.github.cerberus33.weather
 **The table doesn't literally pivot dates into column headers.** The brief asks for "dates as columns, cities as rows"; here, date is one more data column per row rather than a header each date's metrics are grouped under. With a single day requested by default this doesn't lose any information — but it's a deliberate simplification, not an oversight, and it's worth naming as the one place the literal spec isn't followed to the letter. `resolveDateRange`/`resolveWeekAhead` (see below) already produce one row per (city, date) pair for a multi-day request; a true pivot would need `output/` to group those rows by date into column blocks, which wasn't built since a single day doesn't need it.
 
 **Date resolution is a small set of composable, tested functions, not one hardcoded calculation.** `resolveToday()`, `resolveTomorrow()`, and `resolveDateRange(start, days)` all sit on top of one `resolveDate(daysFromNow, clock)`, each verified against a `Clock.fixed` so the result doesn't depend on when the test happens to run. The practical payoff: switching `Main.kt` from "tomorrow" to a full week is a one-line change (`resolveWeekAhead()` instead of `listOf(resolveTomorrow())`) — nothing in the mapper, printer, or models needs to change, since they already operate per (city, date) pair. `resolveForecastDays()` then works out how many days to actually request from the API, with a named safety margin (not a bare magic number) covering the same kind of ±1 day drift the date-matching fix above guards against.
+
+**Caveat:** WeatherAPI's free tier — the one this challenge has you sign up for — only returns a 3-day forecast. `resolveWeekAhead()` is written, tested, and would work correctly against a paid plan, but as shipped against the free tier it would show `No data` for days 4–7, since the API simply won't return that far out. It's kept as a demonstration of how the date-resolution layer generalizes, not as a feature that works end-to-end on the free key this project actually runs with.
 
 **JSON parsing uses `kotlinx.serialization`, with every model field non-null.** The first version used Gson, which fills a field via reflection regardless of whether the JSON actually has it — a missing field can silently produce `0.0` in a `Double` deep inside a "successful" response instead of failing where the mistake actually is. `kotlinx.serialization` enforces the non-null contract at parse time: a genuinely missing field throws immediately, and that exception is caught by the same per-city error handling already in place for network failures, degrading to `No data` instead of quietly corrupting a row.
 
