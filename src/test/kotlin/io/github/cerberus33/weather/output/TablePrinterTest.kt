@@ -47,4 +47,21 @@ class TablePrinterTest {
 
         assertTrue(output.startsWith("Verylongc..."), "Expected truncated name, got: $output")
     }
+
+    @Test
+    fun `does not truncate a city name that fits exactly`() {
+        val row = CityWeatherRow(
+            city = "Copenhagen",
+            date = "2026-08-24",
+            minTemp = "14.7",
+            maxTemp = "23.9",
+            humidity = "39",
+            windSpeed = "22.0",
+            windDir = "NW"
+        )
+
+        val output = captureOutput { printRow(row) }
+
+        assertTrue(output.startsWith("Copenhagen"), "Expected full name, got: $output")
+    }
 }
