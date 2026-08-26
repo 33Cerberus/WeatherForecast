@@ -1,22 +1,18 @@
 # Weather Forecast (Kotlin Code Challenge)
 
-Fetches tomorrow's weather forecast for four cities — Chisinau, Madrid, Kyiv, and Amsterdam — from [WeatherAPI.com](https://www.weatherapi.com/) and prints it as a table.
-
-Built in Kotlin using Gradle and Retrofit (all three challenge bonus points).
-
 [![CI](https://github.com/33Cerberus/WeatherForecast/actions/workflows/ci.yml/badge.svg)](https://github.com/33Cerberus/WeatherForecast/actions/workflows/ci.yml)
 
-## Example output
+A command-line tool that fetches tomorrow's weather forecast for four cities — Chisinau, Madrid, Kyiv, and Amsterdam — from [WeatherAPI.com](https://www.weatherapi.com/) and prints it as a table to STDOUT.
+
+Written in Kotlin, built with Gradle, and talks to the API through Retrofit — all three bonus points from the challenge. Requests for all four cities run in parallel, and a failure for one city (bad key, unknown location, network error, malformed response) shows as `No data` in that row instead of crashing the run.
 
 ```
 City         Date         Min C    Max C    Humidity%  Wind kph   Dir
-Chisinau     2026-08-26   16.8     20.5     78         13.0       ENE
-Madrid       2026-08-26   20.0     26.0     32         27.4       SW
-Kyiv         2026-08-26   16.7     25.3     41         14.4       N
-Amsterdam    2026-08-26   17.6     28.1     62         15.8       E
+Chisinau     2026-08-27   16.8     20.5     78         13.0       ENE
+Madrid       2026-08-27   20.0     26.0     32         27.4       SW
+Kyiv         2026-08-27   16.7     25.3     41         14.4       N
+Amsterdam    2026-08-27   17.6     28.1     62         15.8       E
 ```
-
-If a city's forecast can't be fetched or doesn't contain the target date, its row shows `No data` instead of crashing the whole run.
 
 ## Requirements
 
@@ -31,7 +27,7 @@ Provide the API key either via a `.env` file in the project root:
 WEATHER_API_KEY=your_api_key_here
 ```
 
-(see `.env.example`) or as an environment variable, in the same shell session you'll run the app from:
+(see `.env.example`) or as an environment variable, set in the same shell session you'll run the app from:
 
 ```bash
 export WEATHER_API_KEY=your_api_key_here
@@ -47,50 +43,53 @@ Then run:
 ./gradlew run
 ```
 
-On Windows:
-
 ```powershell
 .\gradlew.bat run
 ```
 
-If the key is missing or blank, the program prints a clear error to stderr and exits with code `1` instead of failing with a stack trace.
+If the key is missing or blank, the program prints a clear message to stderr and exits with code `1` instead of failing with a stack trace.
 
-## Running the tests
+## Tests
 
 ```bash
 ./gradlew test
 ```
 
-A GitHub Actions workflow (`.github/workflows/ci.yml`) runs the full build and test suite on every push.
+16 tests across four areas:
+
+- **Mapping** (`ForecastMapper`) — wind direction as mode, date matching, `No data` fallbacks, and that the table shows the API's normalized city name rather than the raw query string.
+- **Date resolution** (`TargetDate`) — `resolveTomorrow` against a `Clock.fixed`, so the result doesn't depend on when the test actually runs.
+- **Output formatting** (`TablePrinter`) — header layout and long-city-name truncation, verified by temporarily capturing `System.out`.
+- **The network layer** (`WeatherApi`) — a real HTTP round trip against a local `MockWebServer`, once with a valid response and once with a malformed one, confirming that a broken response degrades to `No data` rather than crashing. This is the only layer with an actual dependency on the network, and the only test suite that touches Retrofit's wiring directly.
+
+CI (`.github/workflows/ci.yml`) runs the full build and test suite on every push.
 
 ## Architecture
 
 ```
 io.github.cerberus33.weather
-├── Main.kt              entry point: reads the key, wires everything together, prints the table
-├── api/                 Retrofit interface, HTTP client setup, parallel fetching
-├── model/                @Serializable data classes mirroring the WeatherAPI JSON response
-├── mapper/               turns a raw API response into a printable CityWeatherRow
-├── output/               table formatting and printing
-└── time/                 resolves "tomorrow" from an injectable Clock
+├── Main.kt       entry point: reads the key, wires everything together, prints the table
+├── api/          Retrofit interface, HTTP client setup, parallel per-city fetching
+├── model/        @Serializable data classes mirroring the WeatherAPI JSON response
+├── mapper/       turns a raw API response into a printable CityWeatherRow
+├── output/       table formatting and printing
+└── time/         resolves target dates from an injectable Clock
 ```
 
-Each layer only depends on the ones below it. `mapper`, `output`, and `time` have no dependency on networking or I/O, which is what makes them unit-testable without mocks — `mapper` and `time` are tested against plain data, and `output` is tested by temporarily redirecting `System.out`.
+`mapper`, `output`, and `time` have no dependency on networking or I/O — that's what makes them testable with plain data, no mocks required. `api` is the only layer that touches the network, and it's the only one tested with a mock server rather than in-memory values.
+
+`Main.kt` stays intentionally thin: it reads the key, picks which date(s) to fetch, and prints. All actual logic — what a row should say, how a date is resolved, how a table row is formatted — lives in the layer responsible for it.
 
 ## Design decisions
 
-**Wind speed shown as the day's maximum, not the average.** An average can hide a strong evening gust behind a calm morning, understating real conditions. The API already exposes a daily maximum, so no extra computation is needed.
+**A single target date, shared by all four cities — not one resolved per city's own timezone.** A user checking the forecast late in the evening might already have "tomorrow" cross into the next day in Kyiv but not yet in Madrid. Resolving the date per city would show Kyiv's *day after* tomorrow in that case — technically correct relative to Kyiv, but not what "tomorrow" meant when the user asked. A single date, anchored to wherever the program runs, is what a side-by-side comparison table needs: one consistent answer to "what should I expect everywhere tomorrow," not four independently correct but mutually inconsistent tomorrows. The forecast day is found by matching the API's `date` field by value, not by trusting a fixed array index — an early version that read `forecastday[1]` directly could silently point at the wrong day near a city's midnight boundary.
 
-**Wind direction is the mode across all 24 hours, not a single snapshot.** The API's `day` object has no daily wind direction field, only per-hour values. Picking one hour (e.g. noon) would be an arbitrary sample; the most frequent direction across the day is a more representative summary. Ties are broken by whichever direction appears earliest in the hour list.
+**Date resolution is a small set of composable functions, not one hardcoded calculation.** `resolveToday()`, `resolveTomorrow()`, and `resolveDateRange(start, days)` all sit on top of one `resolveDate(daysFromNow, clock)`. The practical payoff: switching `Main.kt` from "tomorrow" to a full week is a one-line change (`resolveDateRange(1, 7)` instead of `listOf(resolveTomorrow())`) — nothing in the mapper, printer, or models needs to change, since they already operate per (city, date) pair. `resolveForecastDays()` then works out how many days to actually request from the API, so a wider date range never silently runs out of coverage.
 
-**"Tomorrow" is resolved once, from the machine's clock, deliberately not per city.** Consider a user in Madrid checking the forecast late in the evening on August 25th: Kyiv has already crossed into August 26th locally. Resolving "tomorrow" separately for each city's own timezone would show Kyiv's August 27th — technically "tomorrow relative to Kyiv," but not what the user meant when they asked for tomorrow's weather. A single shared target date, anchored to wherever the program is run, is what a comparison table across cities actually needs; the table is meant to answer "what should I expect everywhere tomorrow," not four independent, mutually inconsistent "tomorrows."
+**JSON parsing uses `kotlinx.serialization`, with every model field non-null.** The first version used Gson, which fills a field via reflection regardless of whether the JSON actually has it — a missing field can silently produce `0.0` in a `Double` deep inside a "successful" response instead of failing where the mistake actually is. `kotlinx.serialization` enforces the non-null contract at parse time: a genuinely missing field throws immediately, and that exception is caught by the same per-city error handling already in place for network failures, degrading to `No data` instead of quietly corrupting a row.
 
-An earlier version selected the forecast by a fixed array index (`forecastday[1]`), which broke this same idea in a different way: near midnight, the API's own day boundary for a given city could shift `forecastday[1]` to the wrong date without the code noticing, since it never checked what date it actually got. The fix was to compute the target date once, then search the response for a `ForecastDay` whose `date` field matches it by value rather than trusting its position in the list. `days=3` is requested (not 2) to keep a safety margin against that kind of ±1 day drift. Date resolution lives in its own function, `resolveTargetDate(clock: Clock)`, tested independently of any network call with `Clock.fixed`.
+**Each city runs in its own coroutine, and a failure there doesn't touch the others.** `fetchForecasts` wraps each request in its own `try/catch`, re-throwing `CancellationException` so structured concurrency still works if the whole run is ever cancelled, and logging the real cause to stderr for anything else. `WeatherClient` implements `AutoCloseable` and is used with `use { }`, so OkHttp's background thread pool — which otherwise keeps the JVM alive for a while after the table is printed — shuts down deterministically, including if something upstream throws.
 
-**The displayed city name comes from the API's `location.name`, not the query string**, so a request like `"kiev"` shows up in the table as the normalized `"Kyiv"`. If the request failed outright, the original query string is kept instead, since no API-confirmed name exists.
+**Wind speed shown as the day's maximum, wind direction as the most common hourly value.** An average speed can hide a strong evening gust behind a calm morning; the API already exposes a daily maximum, so no extra computation is needed. Direction has no daily field at all, only per-hour values — the most frequent one across the day is a more representative summary than picking a single arbitrary hour.
 
-**The OkHttp client is closed explicitly.** OkHttp keeps a non-daemon thread pool alive after the main logic finishes, which used to make the JVM hang for a while after printing the table. `WeatherClient` implements `AutoCloseable` and is used with Kotlin's `use { }`, so the client shuts down deterministically, including if an exception is thrown.
-
-**A failed city doesn't stop the others.** Each city's request runs in its own coroutine; a failure (bad key, unknown city, network timeout) is caught, logged to stderr with the actual cause, and rendered as `No data` for that row only. `CancellationException` is re-thrown rather than swallowed, so structured concurrency (e.g. the whole run being cancelled) still works correctly. A partial failure still exits with code `0`, by design: the program did everything it could and produced a best-effort table rather than treating one bad city as a fatal error for the whole run.
-
-**JSON parsing uses `kotlinx.serialization`, not Gson.** All response models are `@Serializable` with non-null fields. If the API response is ever missing a field the code expects, deserialization throws immediately at the parsing boundary instead of silently defaulting to `0.0` or `null` deep inside a non-null field — and that exception is caught by the same per-city error handling already in place, degrading to `No data` rather than corrupting a row. `ignoreUnknownKeys = true` is set explicitly, since the real API response includes many fields (`current`, `astro`, `alerts`, etc.) that aren't modeled here.
+One thing intentionally left as-is: the city list and forecast window are still hardcoded in `Main.kt` rather than taken as CLI arguments. Reasonable for a fixed four-city challenge; the date-resolution design above is what would make that change easy if it were ever needed.
