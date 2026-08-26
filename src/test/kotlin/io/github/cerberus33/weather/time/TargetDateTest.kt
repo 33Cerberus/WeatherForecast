@@ -11,6 +11,15 @@ import kotlin.test.assertFailsWith
 class TargetDateTest {
 
     @Test
+    fun `resolves tomorrow relative to the given clock`() {
+        val clock = Clock.fixed(Instant.parse("2026-08-24T10:00:00Z"), ZoneOffset.UTC)
+
+        val result = resolveTomorrow(clock)
+
+        assertEquals(LocalDate.parse("2026-08-25"), result)
+    }
+
+    @Test
     fun `resolves today relative to the given clock`() {
         val clock = Clock.fixed(Instant.parse("2026-08-24T10:00:00Z"), ZoneOffset.UTC)
 
