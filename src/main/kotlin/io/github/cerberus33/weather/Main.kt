@@ -8,7 +8,8 @@ import io.github.cerberus33.weather.api.fetchForecasts
 import io.github.cerberus33.weather.mapper.buildRow
 import io.github.cerberus33.weather.output.printHeader
 import io.github.cerberus33.weather.output.printRow
-import io.github.cerberus33.weather.time.resolveTargetDate
+import io.github.cerberus33.weather.time.resolveForecastDays
+import io.github.cerberus33.weather.time.resolveTomorrow
 
 fun main(): Unit = runBlocking {
     val apiKey = dotenv { ignoreIfMissing = true }["WEATHER_API_KEY"]
@@ -22,13 +23,17 @@ fun main(): Unit = runBlocking {
 
     createWeatherClient().use { weatherClient ->
         val cities = listOf("Chisinau", "Madrid", "Kyiv", "Amsterdam")
-        val tomorrowDate = resolveTargetDate()
+        val targetDates = listOf(resolveTomorrow())
 
-        val results = fetchForecasts(weatherClient.api, cities, apiKey)
+        val days = resolveForecastDays(targetDates)
+
+        val results = fetchForecasts(weatherClient.api, cities, apiKey, days)
 
         printHeader()
         for (result in results) {
-            printRow(buildRow(result, tomorrowDate))
+            for (date in targetDates) {
+                printRow(buildRow(result, date))
+            }
         }
     }
 }

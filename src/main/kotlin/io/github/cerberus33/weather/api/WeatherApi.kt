@@ -14,7 +14,6 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import java.util.concurrent.TimeUnit
 
-private const val FORECAST_DAYS = 3
 private val json = Json { ignoreUnknownKeys = true }
 
 class WeatherClient(val api: WeatherApi, private val client: OkHttpClient) : AutoCloseable {
@@ -39,11 +38,16 @@ fun createWeatherClient(): WeatherClient {
     return WeatherClient(retrofit.create(WeatherApi::class.java), client)
 }
 
-suspend fun fetchForecasts(api: WeatherApi, cities: List<String>, apiKey: String): List<Pair<String, ForecastResponse?>> = coroutineScope {
+suspend fun fetchForecasts(
+    api: WeatherApi,
+    cities: List<String>,
+    apiKey: String,
+    days: Int
+): List<Pair<String, ForecastResponse?>> = coroutineScope {
     cities.map { city ->
         async {
             try {
-                city to api.getForecast(city, FORECAST_DAYS, apiKey)
+                city to api.getForecast(city, days, apiKey)
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

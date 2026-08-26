@@ -14,7 +14,7 @@ class TargetDateTest {
         val fixedNow = Instant.parse("2026-08-24T10:00:00Z")
         val clock = Clock.fixed(fixedNow, ZoneOffset.UTC)
 
-        val result = resolveTargetDate(clock)
+        val result = resolveTomorrow(clock)
 
         assertEquals(LocalDate.parse("2026-08-25"), result)
     }
