@@ -23,14 +23,14 @@ class WeatherClient(val api: WeatherApi, private val client: OkHttpClient) : Aut
     }
 }
 
-fun createWeatherClient(): WeatherClient {
+fun createWeatherClient(baseUrl: String = "https://api.weatherapi.com/"): WeatherClient {
     val client = OkHttpClient.Builder()
         .connectTimeout(10, TimeUnit.SECONDS)
         .readTimeout(10, TimeUnit.SECONDS)
         .build()
 
     val retrofit = Retrofit.Builder()
-        .baseUrl("https://api.weatherapi.com/")
+        .baseUrl(baseUrl)
         .client(client)
         .addConverterFactory(json.asConverterFactory("application/json".toMediaType()))
         .build()
