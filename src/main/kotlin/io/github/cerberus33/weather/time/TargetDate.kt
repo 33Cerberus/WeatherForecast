@@ -18,9 +18,6 @@ fun resolveTomorrow(clock: Clock = Clock.systemDefaultZone()): LocalDate =
 fun resolveDateRange(startDaysFromNow: Long, days: Int, clock: Clock = Clock.systemDefaultZone()): List<LocalDate> =
     (0 until days).map { resolveDate(startDaysFromNow + it, clock) }
 
-fun resolveWeekAhead(clock: Clock = Clock.systemDefaultZone()): List<LocalDate> =
-    resolveDateRange(startDaysFromNow = 1, days = 7, clock = clock)
-
 fun resolveForecastDays(targetDates: List<LocalDate>, clock: Clock = Clock.systemDefaultZone()): Int {
     require(targetDates.isNotEmpty()) { "targetDates must not be empty" }
     val today = LocalDate.now(clock)

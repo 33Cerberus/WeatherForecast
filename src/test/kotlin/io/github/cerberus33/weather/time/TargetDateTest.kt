@@ -45,17 +45,6 @@ class TargetDateTest {
     }
 
     @Test
-    fun `resolves seven consecutive days starting tomorrow`() {
-        val clock = Clock.fixed(Instant.parse("2026-08-24T10:00:00Z"), ZoneOffset.UTC)
-
-        val result = resolveWeekAhead(clock)
-
-        assertEquals(7, result.size)
-        assertEquals(LocalDate.parse("2026-08-25"), result.first())
-        assertEquals(LocalDate.parse("2026-08-31"), result.last())
-    }
-
-    @Test
     fun `computes forecast days needed to cover the furthest target date`() {
         val clock = Clock.fixed(Instant.parse("2026-08-24T10:00:00Z"), ZoneOffset.UTC)
         val targetDates = listOf(LocalDate.parse("2026-08-25"), LocalDate.parse("2026-08-27"))
