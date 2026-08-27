@@ -68,7 +68,7 @@ CI (`.github/workflows/ci.yml`) runs the full build and test suite on every push
 
 ```
 io.github.cerberus33.weather
-├── Main.kt      entry point: reads the key, wires everything together, prints the table
+├── Main.kt       entry point: reads the key, wires everything together, prints the table
 ├── api/          Retrofit interface, HTTP client setup, parallel per-city fetching
 ├── model/        @Serializable data classes mirroring the WeatherAPI JSON response
 ├── mapper/       turns a raw API response into a printable CityWeatherRow
@@ -87,5 +87,7 @@ io.github.cerberus33.weather
 **JSON parsing uses `kotlinx.serialization`, with every model field non-null.** The first version used Gson, which fills a field via reflection regardless of whether the JSON actually has it — a missing field can silently produce `0.0` in a `Double` deep inside a "successful" response instead of failing where the mistake actually is. `kotlinx.serialization` enforces the non-null contract at parse time: a genuinely missing field throws immediately, and that exception is caught by the same per-city error handling already in place for network failures, degrading to `No data` instead of quietly corrupting a row.
 
 **Each city runs in its own coroutine, and a failure there doesn't touch the others.** `fetchForecasts` wraps each request in its own `try/catch`, re-throwing `CancellationException` so structured concurrency still works if the whole run is ever cancelled, and logging the real cause to stderr for anything else. `WeatherClient` implements `AutoCloseable` and is used with `use { }`, so OkHttp's background thread pool — which otherwise keeps the JVM alive for a while after the table is printed — shuts down deterministically, including if something upstream throws.
+
+**Wind speed is the day's maximum and wind direction is the most common hourly value, not an average or a single snapshot.** An average speed can hide a strong evening gust behind a calm morning, and the API has no daily direction field at all, only per-hour ones — the most frequent hourly direction is a more honest summary than picking one arbitrary hour. Humidity is printed with no decimal places, since fractional percent points aren't meaningful information.
 
 One thing intentionally left as-is: the city list is hardcoded in `Main.kt` rather than taken as a CLI argument — reasonable for a fixed four-city challenge.
